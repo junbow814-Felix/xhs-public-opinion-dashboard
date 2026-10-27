@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-27T17:20:18.112100+08:00",
+  "last_collection": null,
+  "keywords": [
+    {
+      "name": "海尔美容仪",
+      "on": true,
+      "exclude": []
+    }
+  ],
+  "notes": [],
+  "reports": [],
+  "trend": [
+    {
+      "date": "2026-10-21",
+      "label": "10-21",
+      "mentions": null,
+      "neg": null
+    },
+    {
+      "date": "2026-10-22",
+      "label": "10-22",
+      "mentions": null,
+      "neg": null
+    },
+    {
+      "date": "2026-10-23",
+      "label": "10-23",
+      "mentions": null,
+      "neg": null
+    },
+    {
+      "date": "2026-10-24",
+      "label": "10-24",
+      "mentions": null,
+      "neg": null
+    },
+    {
+      "date": "2026-10-25",
+      "label": "10-25",
+      "mentions": null,
+      "neg": null
+    },
+    {
+      "date": "2026-10-26",
+      "label": "10-26",
+      "mentions": null,
+      "neg": null
+    },
+    {
+      "date": "2026-10-27",
+      "label": "10-27",
+      "mentions": null,
+      "neg": null
+    }
+  ],
+  "alertStatus": {},
+  "latest_run": {
+    "status": "running",
+    "message": "采集进行中",
+    "at": "2026-10-27T17:16:54.547863+08:00"
+  },
+  "coverage": "搜索可见样本；不代表平台全量。规则判断需人工复核。"
+}

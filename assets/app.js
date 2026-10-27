@@ -1,0 +1,21 @@
+async function action(path){try{const result=await api(path,{});toast(result.message);await poll();}catch(e){toast(e.message);}}
+async function poll(){if(!state.local)return;try{const task=await api('/api/task');$('taskLog').textContent=task.message;document.querySelectorAll('#genReport,#publishSite,#pushReport').forEach(b=>b.disabled=task.running);if(task.running)setTimeout(poll,2000);else{await load();const events=await api('/api/events');$('taskLog').textContent=task.message+'\n'+events.map(e=>formatTime(e.at)+' '+e.message+' '+(e.errors||[]).join('；')).join('\n');}}catch(e){toast(e.message);}}
+$('tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));['overview','notes','alerts','report','setup'].forEach(p=>$('pg-'+p).classList.toggle('hide',p!==b.dataset.tab));if(b.dataset.tab==='overview'){renderTrend();renderPie();}};
+$('kwAdd').onclick=async()=>{const name=$('kwInput').value.trim();if(!name)return toast('请输入关键词');try{await saveKeywords([...state.keywords,{name,on:true,exclude:[]}]);$('kwInput').value='';}catch(e){toast(e.message);}};
+$('kwInput').onkeydown=e=>{if(e.key==='Enter')$('kwAdd').click();};
+$('fKw').onchange=e=>{state.filterKw=e.target.value;renderNotes();};
+$('fSent').onchange=e=>{state.filterSent=e.target.value;renderNotes();};
+$('fSort').onchange=e=>{state.sortBy=e.target.value;renderNotes();};
+$('fAlert').onchange=e=>{state.filterAlert=e.target.value;renderAlerts();};
+$('fDate').onchange=e=>{const r=state.reports.find(r=>r.date===e.target.value)||state.reports.at(-1);const ids=new Set(r?.note_ids||[]);state.notes=state.allNotes.filter(n=>ids.has(n.id));renderNotes();};
+function closeDrawer(){$('drawer').classList.remove('show');$('drawerMask').classList.remove('show');}
+$('drawerClose').onclick=closeDrawer;$('drawerMask').onclick=closeDrawer;document.onkeydown=e=>{if(e.key==='Escape')closeDrawer();};
+$('exportCsv').onclick=()=>{const notes=sortNotes(filteredNotes());if(!notes.length)return toast('暂无可导出的数据');const cell=v=>{let text=String(v??'');if(/^[=+@\-\t\r]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';};const rows=[['标题','关键词','规则分类','疑似风险','点赞','评论','发布时间','原文'],...notes.map(n=>[n.title,n.keywords.join(' / '),sentName(n.sent),n.risk,n.likes,n.comments,n.time||'未知',n.url])];download('\uFEFF'+rows.map(row=>row.map(cell).join(',')).join('\n'),'舆情样本.csv','text/csv;charset=utf-8');};
+$('genReport').onclick=()=>action('/api/run');$('publishSite').onclick=()=>action('/api/publish');$('pushReport').onclick=()=>action('/api/send');
+$('copyReport').onclick=async()=>{try{await navigator.clipboard.writeText(state.currentReport.text);toast('已复制日报');}catch{toast('复制失败，请使用下载按钮');}};
+$('downloadReport').onclick=()=>{if(state.currentReport)download(state.currentReport.text,'舆情日报-'+state.currentReport.date+'.txt');};
+$('saveSetting').onclick=async()=>{try{const exclude=$('excludeWords').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean);await api('/api/config',{keywords:state.keywords.map(k=>({...k,exclude})),repository:$('setRepository').value,site_url:$('setSite').value,webhook:$('setWebhook').value,secret:$('setSecret').value});$('setWebhook').value='';$('setSecret').value='';await load();toast('本机配置已保存');}catch(e){toast(e.message);}};
+$('checkLogin').onclick=async()=>{const target=$('connectionStatus');target.textContent='正在检查登录…';try{const data=await api('/api/login/status',{});target.textContent=data.message||(data.is_logged_in?'小红书已登录，可以开始采集':'尚未登录，请扫码登录');}catch(e){target.textContent=e.message;}};
+$('loginQr').onclick=()=>{$('connectionStatus').textContent='请在 Chrome 中打开小红书并扫码登录，保持 OpenCLI 扩展启用；然后返回上报中心执行采集。工作台不会读取或上传浏览器 Cookie。';};
+window.addEventListener('resize',()=>{if(!$('pg-overview').classList.contains('hide')){renderTrend();renderPie();}});
+(async()=>{try{if(['127.0.0.1','localhost'].includes(location.hostname)){try{const session=await api('/api/session');state.local=session.mode==='local';state.token=session.token;}catch{}}document.body.classList.toggle('local-mode',state.local);await load();if(state.local)await poll();}catch(e){$('runNotice').textContent='数据加载失败，请稍后刷新。没有将错误当成零舆情。';document.querySelector('.badge-demo').textContent='加载失败';}})();

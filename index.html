@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小红书舆情监控工作台</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/live.css">
+</head>
+<body>
+<div class="app">
+  <!-- SECTION: header -->
+  <header class="hd">
+    <div class="logo">舆</div>
+    <div>
+      <h1>小红书舆情监控工作台 <span class="hd-ver">LIVE</span></h1>
+      <div class="sub" id="hdDate"></div>
+    </div>
+    <span class="badge-demo">正在加载数据</span>
+  </header>
+
+  <!-- SECTION: tabs -->
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="on">舆情总览</button>
+    <button data-tab="notes">笔记列表</button>
+    <button data-tab="alerts">预警中心</button>
+    <button data-tab="report">上报中心</button>
+    <button data-tab="setup">运行与设置</button>
+    
+  </nav>
+
+<div class="notice" id="runNotice" role="status">正在读取采集状态…</div>
+  <!-- SECTION: overview -->
+  <section id="pg-overview">
+    <div class="grid g4" id="statRow"></div>
+    <div class="grid g2 mt">
+      <div class="card">
+        <h3>近 7 日声量与负面趋势 <span class="tag">提及量 / 负面量</span></h3>
+        <div class="chart-wrap"><canvas id="trendChart" height="220"></canvas></div>
+        <div class="legend"><span><i style="background:#ff2442"></i>提及量</span><span><i style="background:#7c8291"></i>负面量</span></div>
+      </div>
+      <div class="card">
+        <h3>本轮规则分类</h3>
+        <div class="chart-wrap"><canvas id="pieChart" height="220"></canvas></div>
+        <div class="legend" id="pieLegend"></div>
+      </div>
+    </div>
+    <div class="grid g2 mt">
+      <div class="card">
+        <h3>监控关键词 <span class="tag">由 Mac 统一管理</span></h3>
+        <div class="kw-row local-only">
+          <input id="kwInput" type="text" placeholder="输入关键词，如：品牌名 / 产品名" maxlength="50" aria-label="新关键词">
+          <button class="btn btn-primary" id="kwAdd" data-primary-action>添加</button>
+        </div>
+        <div class="kw-list" id="kwList"></div>
+      </div>
+      <div class="card">
+        <h3>关键词热度榜 <span class="tag">本轮样本</span></h3>
+        <div class="rank" id="kwRank"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: notes -->
+  <section id="pg-notes" class="hide">
+    <div class="card">
+      <h3>监控到的笔记 <span class="tag" id="noteCount"></span></h3>
+      <div class="filters">
+        <select id="fDate" aria-label="选择报告日期"><option value="latest">最新报告</option></select>
+        <select id="fKw" aria-label="按关键词筛选"></select>
+        <select id="fSent" aria-label="按情感筛选">
+          <option value="all">全部情感</option>
+          <option value="neg">负面</option>
+          <option value="pos">正面</option>
+          <option value="neu">中性</option>
+        </select>
+        <select id="fSort" aria-label="排序方式">
+          <option value="heat">按互动热度</option>
+          <option value="time">按发布时间</option>
+          <option value="risk">按风险等级</option>
+        </select>
+        <button class="btn btn-ghost" id="exportCsv">导出 CSV</button>
+      </div>
+      <div class="notes" id="noteList"></div>
+      <div class="empty hide" id="noteEmpty">没有符合条件的笔记，换个筛选试试</div>
+    </div>
+  </section>
+
+  <!-- SECTION: alerts -->
+  <section id="pg-alerts" class="hide">
+    <div class="card">
+      <h3>风险预警 <span class="tag">本地管理 / 公开只读</span></h3>
+      <div class="filters">
+        <select id="fAlert" aria-label="按预警状态筛选">
+          <option value="all">全部状态</option>
+          <option value="待处理">待处理</option>
+          <option value="处理中">处理中</option>
+          <option value="已闭环">已闭环</option>
+        </select>
+      </div>
+      <div id="alertList"></div>
+      <div class="empty hide" id="alertEmpty">没有符合条件的规则命中；不代表不存在风险</div>
+    </div>
+  </section>
+
+  <!-- SECTION: report -->
+  <section id="pg-report" class="hide">
+    <div class="card">
+      <h3>每日舆情上报</h3>
+      <div class="report-actions">
+        <button class="btn btn-primary" id="genReport" data-local="true" data-primary-action>立即采集并生成日报</button>
+        <button class="btn btn-ghost hide" id="copyReport">复制上报文本</button>
+        <button class="btn btn-ghost hide" id="downloadReport">下载 .txt</button>
+        <button class="btn btn-ghost hide" id="pushReport" data-local="true">发送到钉钉</button>
+      </div>
+      <div class="report-preview hide" id="reportPreview"></div>
+      <div class="empty" id="reportEmpty">尚未立即采集并生成日报。点击「立即采集并生成日报」自动汇总关键词声量、负面预警与代表笔记。</div>
+    </div>
+    <div class="card mt">
+      <h3>历史上报记录 <span class="tag">由 Mac 统一管理</span></h3>
+      <div class="hist" id="histList"></div>
+      <div class="empty hide" id="histEmpty">暂无历史上报记录</div>
+    </div>
+  </section>
+
+
+<section id="pg-setup" class="hide">
+ <div class="grid g2">
+  <div class="card"><h3>运行状态 <span class="tag" id="modeLabel">公开工作台</span></h3>
+   <p>网站持续在线；采集和更新由 Mac 执行。每天 07:00 采集，09:00 发布。关机时保留最后一次结果。</p>
+   <p>免费规则分析，不调用付费 AI。内容仅为搜索可见样本，疑似风险需要人工复核。</p>
+   <div id="connectionStatus" class="notice">采集连接只能在 Mac 本地检查。</div>
+   <div class="local-only actions"><button class="btn btn-ghost" id="checkLogin">检查小红书连接</button><button class="btn btn-ghost" id="loginQr">登录说明</button></div>
+   <img id="qrImage" class="hide" alt="小红书登录二维码" style="max-width:240px;margin-top:12px">
+  </div>
+  <div class="card"><h3>发布与隐私</h3><p>公开页面及数据任何人均可查看。发布内容仅包含必要摘录、统计和原文链接。</p><p>关键词、预警状态和发送配置由本机统一管理，公开访客不能修改。</p><p>登录凭据与完整采集数据库不会上传 GitHub。</p>
+   <div class="local-only actions"><button id="publishSite" class="btn btn-primary">发布到 GitHub Pages</button></div>
+  </div>
+ </div>
+ <div class="card mt local-only"><h3>本机配置 <span class="tag">敏感值不会返回页面</span></h3>
+  <div class="setting-row"><label for="excludeWords">排除词（全部关键词）</label><input id="excludeWords" placeholder="逗号分隔，可留空"></div>
+  <div class="setting-row"><label for="setRepository">GitHub 专用公开仓库</label><input id="setRepository" placeholder="用户名/仓库名"></div>
+  <div class="setting-row"><label for="setSite">网站地址</label><input id="setSite" placeholder="https://用户名.github.io/仓库名/"></div>
+  <div class="setting-row"><label for="setWebhook">钉钉 Webhook（选填）</label><input id="setWebhook" type="password" autocomplete="off" placeholder="留空保留现有配置"></div>
+  <div class="setting-row"><label for="setSecret">钉钉加签密钥（选填）</label><input id="setSecret" type="password" autocomplete="off" placeholder="留空保留现有配置"></div>
+  <p id="secretStatus"></p><button id="saveSetting" class="btn btn-primary">保存本机配置</button>
+ </div>
+ <div class="card mt local-only"><h3>最近任务</h3><div id="taskLog" class="report-preview">暂无任务</div></div>
+</section>
+</div>
+<!-- SECTION: drawer -->
+<div class="drawer-mask" id="drawerMask"></div>
+<aside class="drawer" id="drawer" aria-label="笔记详情">
+  <div class="drawer-hd">
+    <h3>笔记详情</h3>
+    <button class="drawer-close" id="drawerClose" aria-label="关闭">✕</button>
+  </div>
+  <div class="drawer-bd" id="drawerBd"></div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script src="assets/state.js"></script>
+<script src="assets/charts.js"></script>
+<script src="assets/views.js"></script>
+<script src="assets/app.js"></script>
+</body></html>
